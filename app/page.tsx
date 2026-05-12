@@ -2,6 +2,7 @@
 
 import {
   AlertCircle,
+  CheckCircle2,
   FileJson,
   Loader2,
   RotateCcw,
@@ -42,6 +43,7 @@ export default function Home() {
   const [submittedReceipt, setSubmittedReceipt] = useState<SubmittedReceipt | null>(null);
   const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const saved = window.localStorage.getItem(STORAGE_KEY);
@@ -64,6 +66,7 @@ export default function Home() {
   }, [previewUrl]);
 
   function updateField(field: keyof ReceiptFields, value: string) {
+    setSuccessMessage("");
     setFormValues((current) => ({
       ...current,
       [field]: value,
@@ -73,6 +76,7 @@ export default function Home() {
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
     setError("");
+    setSuccessMessage("");
     setRawJson(null);
 
     if (!file) {
@@ -109,6 +113,7 @@ export default function Home() {
 
     setIsExtracting(true);
     setError("");
+    setSuccessMessage("");
     setRawJson(null);
 
     const payload = new FormData();
@@ -152,6 +157,7 @@ export default function Home() {
 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(submitted));
     setSubmittedReceipt(submitted);
+    setSuccessMessage("Receipt saved locally.");
   }
 
   function resetAll() {
@@ -165,6 +171,7 @@ export default function Home() {
     setRawJson(null);
     setSubmittedReceipt(null);
     setError("");
+    setSuccessMessage("");
     window.localStorage.removeItem(STORAGE_KEY);
 
     if (fileInputRef.current) {
@@ -201,6 +208,17 @@ export default function Home() {
           <div className="flex items-start gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             <AlertCircle className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
             <p>{error}</p>
+          </div>
+        ) : null}
+
+        {successMessage ? (
+          <div
+            className="flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+            role="status"
+            aria-live="polite"
+          >
+            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none" aria-hidden="true" />
+            <p>{successMessage}</p>
           </div>
         ) : null}
 
@@ -289,9 +307,11 @@ export default function Home() {
               </div>
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <label className="block">
+                <label className="block" htmlFor="merchantName">
                   <span className="text-sm font-semibold text-slate-700">Merchant name</span>
                   <input
+                    id="merchantName"
+                    name="merchantName"
                     value={formValues.merchantName}
                     onChange={(event) => updateField("merchantName", event.target.value)}
                     className="mt-2 h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
@@ -299,9 +319,11 @@ export default function Home() {
                   />
                 </label>
 
-                <label className="block">
+                <label className="block" htmlFor="date">
                   <span className="text-sm font-semibold text-slate-700">Date</span>
                   <input
+                    id="date"
+                    name="date"
                     value={formValues.date}
                     onChange={(event) => updateField("date", event.target.value)}
                     className="mt-2 h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
@@ -309,9 +331,11 @@ export default function Home() {
                   />
                 </label>
 
-                <label className="block">
+                <label className="block" htmlFor="totalAmount">
                   <span className="text-sm font-semibold text-slate-700">Total amount</span>
                   <input
+                    id="totalAmount"
+                    name="totalAmount"
                     value={formValues.totalAmount}
                     onChange={(event) => updateField("totalAmount", event.target.value)}
                     className="mt-2 h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
@@ -319,9 +343,11 @@ export default function Home() {
                   />
                 </label>
 
-                <label className="block">
+                <label className="block" htmlFor="currency">
                   <span className="text-sm font-semibold text-slate-700">Currency</span>
                   <input
+                    id="currency"
+                    name="currency"
                     value={formValues.currency}
                     onChange={(event) => updateField("currency", event.target.value)}
                     className="mt-2 h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
