@@ -4,6 +4,10 @@ AI Intern assessment submission: a Next.js App Router application that uploads a
 
 The project focuses on a practical AI-assisted workflow: use the model for first-pass extraction, keep the API key server-side, show the raw JSON for transparency, and let the user correct the final data before saving.
 
+## Live Demo
+
+https://receipt-ai-autofill-eta.vercel.app
+
 ## Demo Summary
 
 - Upload a receipt image: JPEG, PNG, WebP, HEIC, or HEIF.
