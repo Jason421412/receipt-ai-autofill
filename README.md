@@ -1,119 +1,66 @@
 # Receipt AI Autofill
 
-AI Intern assessment submission: a Next.js App Router application that uploads a receipt image, extracts structured receipt data with Gemini Vision, auto-fills an editable form, and saves the reviewed submission locally in the browser.
+AI-assisted receipt extraction app that converts receipt images into editable structured form data with human review.
 
-The project focuses on a practical AI-assisted workflow: use the model for first-pass extraction, keep the API key server-side, show the raw JSON for transparency, and let the user correct the final data before saving.
+## Problem
 
-## Demo Summary
+Receipts are common, messy, and time-consuming to enter manually. A useful automation tool should extract the obvious fields quickly while still letting a person review the result before anything is saved.
 
-- Upload a receipt image: JPEG, PNG, WebP, HEIC, or HEIF.
-- Validate file type and size before sending it to the server.
-- Preview the selected receipt in the browser.
-- Extract `merchantName`, `date`, `totalAmount`, and `currency` with Gemini.
-- Display the model output as raw JSON.
-- Auto-fill an editable form for human review.
-- Save the final reviewed receipt in `localStorage`.
-- Reset the workflow at any time.
+## Solution
+
+Receipt AI Autofill uses a server-side Gemini Vision route to extract key receipt fields from an uploaded image, fills an editable form, shows the raw structured output for transparency, and stores the reviewed result locally in the browser.
+
+This is an AI product engineering prototype, not a production accounting system.
+
+## Key Features
+
+- Upload JPEG, PNG, WebP, HEIC, or HEIF receipt images.
+- Validate image type and 10 MB size limit on the client and server.
+- Preview the selected receipt locally.
+- Send the image to a server-only `/api/extract` route.
+- Keep `GEMINI_API_KEY` out of client-side code.
+- Prompt Gemini Vision for strict JSON fields.
+- Parse and normalize `merchantName`, `date`, `totalAmount`, and `currency`.
+- Show a raw JSON preview for review/debugging.
+- Let the user edit extracted values before saving.
+- Persist the reviewed result in `localStorage`.
+- Handle missing API keys, malformed requests, unsupported files, oversized files, failed model calls, and unparseable model output.
 
 ## Tech Stack
 
 - **Framework:** Next.js App Router
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
-- **Icons:** Lucide React
-- **AI Model:** `gemini-2.5-flash`
-- **Server Layer:** Next.js route handler at `/api/extract`
-- **Client Persistence:** Browser `localStorage`
+- **AI provider:** Gemini Vision via REST API
+- **Server boundary:** Next.js route handler at `app/api/extract/route.ts`
+- **Client persistence:** Browser `localStorage`
+
+## AI Extraction Flow
+
+```text
+User selects receipt image
+  -> Client validates type/size and previews image
+  -> Client POSTs FormData to /api/extract
+  -> Server validates multipart file
+  -> Server reads GEMINI_API_KEY from env
+  -> Server sends inline image + JSON prompt to Gemini
+  -> Server parses/normalizes JSON
+  -> Client fills editable review form
+  -> User edits and saves reviewed result locally
+```
+
+See [docs/ai-extraction-flow.md](docs/ai-extraction-flow.md) for more detail.
 
 ## Architecture Overview
 
-```text
-Browser UI
-  |
-  | 1. User uploads receipt image
-  v
-Client Component: app/page.tsx
-  |
-  | 2. Sends multipart form data to internal API route
-  v
-Server Route: app/api/extract/route.ts
-  |
-  | 3. Validates image and reads GEMINI_API_KEY from server env
-  v
-Gemini Vision API
-  |
-  | 4. Returns structured receipt JSON
-  v
-Server Route normalizes and validates response
-  |
-  | 5. Client receives extracted fields
-  v
-Editable Review Form + Raw JSON Preview
-  |
-  | 6. User submits reviewed result
-  v
-localStorage
-```
+- `app/page.tsx` is the client workflow: upload, preview, extraction trigger, editable form, raw JSON preview, local save, and reset.
+- `app/api/extract/route.ts` is the server-only AI boundary: environment lookup, file validation, Gemini request, response parsing, and error handling.
+- `app/globals.css` and Tailwind provide the UI styling.
+- `.env.example` documents the required server-only environment variable.
 
-### Key Files
+See [docs/architecture.md](docs/architecture.md) for implementation notes and boundaries.
 
-| File | Purpose |
-| --- | --- |
-| `app/page.tsx` | Main client-side upload, preview, extraction, editing, submission, and reset workflow. |
-| `app/api/extract/route.ts` | Server-only Gemini integration, image validation, prompt construction, response parsing, and error handling. |
-| `app/layout.tsx` | App metadata and root layout. |
-| `app/globals.css` | Tailwind setup and global visual styling. |
-| `.env.example` | Documents the required server-side Gemini API key. |
-
-## Project Flow
-
-1. The user selects a receipt image from their device.
-2. The client validates the MIME type and enforces the 10 MB image limit.
-3. The selected image is previewed locally with `URL.createObjectURL`.
-4. The user clicks **Extract Fields**.
-5. The client sends the image as `FormData` to `/api/extract`.
-6. The API route checks `GEMINI_API_KEY`, validates the uploaded file, converts the image to base64, and sends it to Gemini.
-7. Gemini is prompted to return JSON only with the required receipt fields.
-8. The server strips possible code fences, parses the response, and normalizes missing values to empty strings.
-9. The client displays the raw JSON and fills the editable form.
-10. The user reviews or edits the values, then submits the final receipt.
-11. The submitted result is saved to `localStorage` and rendered below the form.
-
-## Screenshots
-
-### Upload And Review Screen
-
-![Upload state](docs/screenshots/upload-state.png)
-
-The screenshot above shows the initial upload and editable review interface. Add more captures to `docs/screenshots/` if your assessment platform accepts multiple images.
-
-Recommended captures:
-
-| Screenshot | What It Should Show |
-| --- | --- |
-| `docs/screenshots/upload-state.png` | Initial upload screen with the receipt image panel and empty editable form. |
-| `docs/screenshots/extracted-fields.png` | A receipt preview, raw JSON response, and auto-filled form fields after extraction. |
-| `docs/screenshots/submitted-result.png` | The reviewed submitted result saved and displayed below the form. |
-
-Suggested Markdown once screenshots are added:
-
-```md
-![Upload state](docs/screenshots/upload-state.png)
-![Extracted fields](docs/screenshots/extracted-fields.png)
-![Submitted result](docs/screenshots/submitted-result.png)
-```
-
-## Environment Variables
-
-Create `.env.local` in the project root:
-
-```bash
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-Do not prefix the key with `NEXT_PUBLIC_`. The key must remain server-only and is read only inside `app/api/extract/route.ts`.
-
-## Local Development
+## Local Setup
 
 Install dependencies:
 
@@ -121,13 +68,21 @@ Install dependencies:
 npm install
 ```
 
-Create the environment file:
+Create a local environment file:
 
 ```bash
 cp .env.example .env.local
 ```
 
-Start the development server:
+Fill in your Gemini API key:
+
+```txt
+GEMINI_API_KEY=
+```
+
+Do not prefix the key with `NEXT_PUBLIC_`.
+
+## How to Run
 
 ```bash
 npm run dev
@@ -135,96 +90,56 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-On Windows PowerShell, if `npm` is blocked by execution policy, use:
+On Windows PowerShell:
 
 ```powershell
 npm.cmd install
 npm.cmd run dev
 ```
 
-## Available Scripts
+## Testing / Quality Checks
 
-| Command | Description |
-| --- | --- |
-| `npm run dev` | Starts the local Next.js development server. |
-| `npm run build` | Creates a production build. |
-| `npm run start` | Runs the production build after `npm run build`. |
-| `npm run typecheck` | Runs TypeScript validation with `tsc --noEmit`. |
-
-## Gemini Prompt
-
-The server route uses a strict extraction prompt that asks Gemini to return only valid JSON:
-
-```text
-You are a receipt extraction engine.
-
-Extract the following fields from the receipt image:
-- merchantName
-- date
-- totalAmount
-- currency
-
-Return valid JSON only with exactly these keys:
-{
-  "merchantName": "",
-  "date": "",
-  "totalAmount": "",
-  "currency": ""
-}
-
-Rules:
-- Do not include markdown, comments, explanations, or extra keys.
-- If a field is unclear or not visible, return an empty string for that field.
-- Use the receipt transaction date when available.
-- Return totalAmount as the final amount paid, including tax, tips, and discounts when shown.
-- Return currency as the ISO 4217 code when clear, otherwise the visible currency symbol, otherwise an empty string.
+```bash
+npm run typecheck
+npm run build
 ```
 
-## Deployment Instructions
+There is no dedicated automated test suite yet.
 
-### Vercel
+## Security Notes
 
-1. Push the project to a Git repository.
-2. Import the repository into Vercel.
-3. Add `GEMINI_API_KEY` in **Project Settings > Environment Variables**.
-4. Deploy with the default Next.js settings.
-5. Verify `/api/extract` works with a real receipt image after deployment.
+- Gemini credentials stay server-side in `app/api/extract/route.ts`.
+- Uploaded images are not permanently stored by this app.
+- The server rejects unsupported file types and files over 10 MB.
+- The client stores only the reviewed extracted fields in `localStorage`.
+- The app is not designed for sensitive financial record storage without additional backend security, retention controls, and access control.
 
-### Other Next.js Hosts
+## Known Limitations
 
-Use any platform that supports Next.js server routes, such as Netlify or a Node-based host.
+- Extraction quality depends on receipt image quality, angle, lighting, and text visibility.
+- Only four fields are extracted.
+- There are no confidence scores or field-level uncertainty indicators.
+- The app has no authentication, database, or cross-device sync.
+- `localStorage` persistence is browser-local and can be cleared by the user or browser.
+- The app does not claim OCR accuracy metrics.
 
-1. Install dependencies with `npm install`.
-2. Build the app with `npm run build`.
-3. Start the production server with `npm run start`.
-4. Configure `GEMINI_API_KEY` as a server-side environment variable.
+## Roadmap
 
-### Production Notes
+- Add automated tests for validation, response parsing, and form state.
+- Add confidence or review-needed indicators.
+- Extract line items, taxes, tips, receipt numbers, payment method, and merchant address.
+- Add CSV/JSON export.
+- Add drag-and-drop and mobile camera capture.
+- Add optional authenticated database persistence.
+- Add a screenshot set and short demo clip.
 
-- The app uses server-side API routes, so it cannot be deployed as a purely static export.
-- Uploaded images are sent inline as base64 to Gemini, so the 10 MB limit should remain in place.
-- `localStorage` is browser-only persistence; no server database is required for this assessment version.
+## What I Learned
 
-## Limitations
+- How to keep an AI API key behind a server boundary in a Next.js app.
+- Why model output needs defensive parsing even when JSON is requested.
+- How human-in-the-loop review makes AI extraction safer and more useful.
+- How to build a compact AI product workflow without overbuilding the backend.
 
-- Extraction accuracy depends on receipt quality, lighting, angle, and text visibility.
-- The app extracts only four fields: merchant name, date, total amount, and currency.
-- Only one submitted result is stored locally; each new submission replaces the previous one.
-- The app has no authentication, user accounts, or cross-device sync.
-- Uploaded images are processed through the server route but are not permanently stored.
-- Very large or multi-page receipts would need a file-upload workflow instead of inline base64.
+## Screenshot
 
-## Future Improvements
-
-- Add automated tests for file validation, API error handling, and form submission.
-- Add support for line items, taxes, tips, receipt number, payment method, and merchant address.
-- Store reviewed receipts in a database with user authentication.
-- Add export options such as CSV, JSON, or accounting-system integrations.
-- Add confidence scores and field-level review indicators.
-- Add drag-and-drop upload and mobile camera capture.
-- Add OCR fallback or retry logic for low-confidence model responses.
-- Add screenshot assets and a short demo video for submission polish.
-
-## Assessment Notes
-
-This implementation keeps the AI integration behind a server boundary, validates user input before model calls, handles malformed model output defensively, and keeps the user in control of the final submitted data. The result is intentionally small but production-minded: clear boundaries, typed data flow, explicit error states, and a review step before persistence.
+![Upload and review screen](docs/screenshots/upload-state.png)
